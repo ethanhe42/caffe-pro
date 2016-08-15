@@ -33,6 +33,40 @@ TYPED_TEST(ConstantFillerTest, TestFill) {
   }
 }
 
+template <typename Dtype>
+class EyeFillerTest : public ::testing::Test {
+ protected:
+  EyeFillerTest()
+      : blob_(new Blob<Dtype>(5, 5)),
+        filler_param_() {
+    // filler_param_.set_value(10.);
+    filler_.reset(new EyeFiller<Dtype>(filler_param_));
+    filler_->Fill(blob_);
+  }
+  virtual ~EyeFillerTest() { delete blob_; }
+  Blob<Dtype>* const blob_;
+  FillerParameter filler_param_;
+  shared_ptr<EyeFiller<Dtype> > filler_;
+};
+
+TYPED_TEST_CASE(EyeFillerTest, TestDtypes);
+
+TYPED_TEST(EyeFillerTest, TestFill) {
+  EXPECT_TRUE(this->blob_);
+  const int count = this->blob_->count();
+  const int dim = this->blob_->count(0) + 1;
+  EXPECT_EQ(this->blob_->count(1), dim);
+  const TypeParam* data = this->blob_->cpu_data();
+  for (int i = 0; i < count; ++i) {
+    if (i % dim == 0) {
+      EXPECT_EQ(data[i], 1);
+    } else {
+      EXPECT_EQ(data[i], 0);
+    }
+    // EXPECT_GE(data[i], this->filler_param_.value());
+  }
+}
+
 
 template <typename Dtype>
 class UniformFillerTest : public ::testing::Test {

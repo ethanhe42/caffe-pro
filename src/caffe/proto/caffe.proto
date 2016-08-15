@@ -822,7 +822,6 @@ message InnerProductParameter {
 }
 
 message MatmulParameter {
-  optional uint32 num_output = 1; // The number of outputs for the layer
   optional bool bias_term = 2 [default = true]; // whether to have bias terms
   optional FillerParameter weight_filler = 3; // The filler for the weight
   optional FillerParameter bias_filler = 4; // The filler for the bias
@@ -830,7 +829,7 @@ message MatmulParameter {
   // The first axis to be lumped into a single inner product computation;
   // all preceding axes are retained in the output.
   // May be negative to index from the end (e.g., -1 for the last axis).
-  optional int32 axis = 5 [default = 1];
+  optional int32 axis = 5 [default = 2];
   // Specify whether to transpose the weight matrix or not.
   // If transpose == true, any operations will be performed on the transpose
   // of the weight matrix. The weight matrix itself is not going to be transposed

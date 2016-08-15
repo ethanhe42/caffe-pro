@@ -10,10 +10,9 @@ namespace caffe {
 template <typename Dtype>
 void MatmulLayer<Dtype>::LayerSetUp(const vector<Blob<Dtype>*>& bottom,
       const vector<Blob<Dtype>*>& top) {
-  const int num_output = this->layer_param_.inner_product_param().num_output();
   bias_term_ = this->layer_param_.inner_product_param().bias_term();
   transpose_ = this->layer_param_.inner_product_param().transpose();
-  N_ = num_output;
+  const int fin_in = bottom[0]->shape()[1];
   const int axis = bottom[0]->CanonicalAxisIndex(
       this->layer_param_.inner_product_param().axis());
   // Dimensions starting from "axis" are "flattened" into a single
@@ -21,37 +20,21 @@ void MatmulLayer<Dtype>::LayerSetUp(const vector<Blob<Dtype>*>& bottom,
   // and axis == 1, N inner products with dimension CHW are performed.
   K_ = bottom[0]->count(axis);
   // Check if we need to set up the weights
-  if (this->blobs_.size() > 0) {
-    LOG(INFO) << "Skipping parameter initialization";
-  } else {
-    if (bias_term_) {
-      this->blobs_.resize(2);
-    } else {
-      this->blobs_.resize(1);
-    }
-    // Initialize the weights
-    vector<int> weight_shape(2);
-    if (transpose_) {
-      weight_shape[0] = K_;
-      weight_shape[1] = N_;
-    } else {
-      weight_shape[0] = N_;
-      weight_shape[1] = K_;
-    }
-    this->blobs_[0].reset(new Blob<Dtype>(weight_shape));
-    // fill the weights
+  if (bias_term_) {
+    this->blobs_.resize(1);
+    // Initialize the eye
+    vector<int> eye_shape(2);
+      eye_shape[0] = fin_in;
+      eye_shape[1] = fin_in;
+    this->blobs_[0].reset(new Blob<Dtype>(eye_shape));
+
+    // fill the eyes
     shared_ptr<Filler<Dtype> > weight_filler(GetFiller<Dtype>(
-        this->layer_param_.inner_product_param().weight_filler()));
+    this->layer_param_.inner_product_param().weight_filler()));
     weight_filler->Fill(this->blobs_[0].get());
-    // If necessary, intiialize and fill the bias term
-    if (bias_term_) {
-      vector<int> bias_shape(1, N_);
-      this->blobs_[1].reset(new Blob<Dtype>(bias_shape));
-      shared_ptr<Filler<Dtype> > bias_filler(GetFiller<Dtype>(
-          this->layer_param_.inner_product_param().bias_filler()));
-      bias_filler->Fill(this->blobs_[1].get());
-    }
-  }  // parameter initialization
+  }
+
+
   this->param_propagate_down_.resize(this->blobs_.size(), true);
 }
 

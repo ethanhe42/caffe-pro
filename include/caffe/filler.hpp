@@ -49,6 +49,35 @@ class ConstantFiller : public Filler<Dtype> {
   }
 };
 
+/// @brief Fills a Blob with I .
+template <typename Dtype>
+class EyeFiller : public Filler<Dtype> {
+ public:
+  explicit EyeFiller(const FillerParameter& param)
+      : Filler<Dtype>(param) {}
+  virtual void Fill(Blob<Dtype>* blob) {
+    Dtype* data = blob->mutable_cpu_data();
+    const int count = blob->count();
+    const int dim = blobs->count(0);
+    CHECK_EQ(dim, blobs->count(1));
+    CHECK_EQ(dim*dim, count);
+    // const Dtype value = this->filler_param_.value();
+    CHECK(count);
+    int cnt = 0;
+    for (int i = 0; i < dim; ++i) {
+      for (int j = 0; j < dim; ++j) {
+        if (i == j){
+          data[cnt] = 1;
+        } else {
+          data[cnt] = 0;
+        }
+      }
+    }
+    CHECK_EQ(this->filler_param_.sparse(), -1)
+         << "Sparsity not supported by this Filler.";
+  }
+};
+
 /// @brief Fills a Blob with uniformly distributed values @f$ x\sim U(a, b) @f$.
 template <typename Dtype>
 class UniformFiller : public Filler<Dtype> {
@@ -352,6 +381,8 @@ Filler<Dtype>* GetFiller(const FillerParameter& param) {
     return new BilinearFiller<Dtype>(param);
   } else if (type == "orthogonal") {
     return new OrthogonalFiller<Dtype>(param);    
+  } else if (type == "eye") {
+    return new EyeFiller<Dtype>(param);    
   } else {
     CHECK(false) << "Unknown filler name: " << param.type();
   }
