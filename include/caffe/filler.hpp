@@ -49,7 +49,7 @@ class ConstantFiller : public Filler<Dtype> {
   }
 };
 
-/// @brief Fills a Blob with I .
+/// @brief Fills a Blob with value * I .
 template <typename Dtype>
 class EyeFiller : public Filler<Dtype> {
  public:
@@ -57,20 +57,21 @@ class EyeFiller : public Filler<Dtype> {
       : Filler<Dtype>(param) {}
   virtual void Fill(Blob<Dtype>* blob) {
     Dtype* data = blob->mutable_cpu_data();
-    const int count = blob->count();
-    const int dim = blobs->count(0);
-    CHECK_EQ(dim, blobs->count(1));
+    const int count = blob->count(0);
+    const int dim = blob->count(0,1);
+    CHECK_EQ(dim, blob->count(1));
     CHECK_EQ(dim*dim, count);
-    // const Dtype value = this->filler_param_.value();
+    const Dtype value = this->filler_param_.value();
     CHECK(count);
     int cnt = 0;
     for (int i = 0; i < dim; ++i) {
       for (int j = 0; j < dim; ++j) {
         if (i == j){
-          data[cnt] = 1;
+          data[cnt] = value;
         } else {
           data[cnt] = 0;
         }
+        cnt++;
       }
     }
     CHECK_EQ(this->filler_param_.sparse(), -1)
