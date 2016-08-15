@@ -1,4 +1,5 @@
 ## General
+.vscode/
 core
 # Compiled Object files
 *.slo
