@@ -1,6 +1,6 @@
 #include <vector>
 
-//#include "caffe/filler.hpp"
+#include "caffe/filler.hpp"
 // #include "caffe/layers/inner_product_layer.hpp"
 #include "caffe/layers/matmul_layer.hpp"
 #include "caffe/util/math_functions.hpp"
@@ -8,7 +8,7 @@
 namespace caffe {
 
 template <typename Dtype>
-void InnerProductLayer<Dtype>::LayerSetUp(const vector<Blob<Dtype>*>& bottom,
+void MatmulLayer<Dtype>::LayerSetUp(const vector<Blob<Dtype>*>& bottom,
       const vector<Blob<Dtype>*>& top) {
   const int num_output = this->layer_param_.inner_product_param().num_output();
   bias_term_ = this->layer_param_.inner_product_param().bias_term();
@@ -56,7 +56,7 @@ void InnerProductLayer<Dtype>::LayerSetUp(const vector<Blob<Dtype>*>& bottom,
 }
 
 template <typename Dtype>
-void InnerProductLayer<Dtype>::Reshape(const vector<Blob<Dtype>*>& bottom,
+void MatmulLayer<Dtype>::Reshape(const vector<Blob<Dtype>*>& bottom,
       const vector<Blob<Dtype>*>& top) {
   // Figure out the dimensions
   const int axis = bottom[0]->CanonicalAxisIndex(
@@ -82,13 +82,13 @@ void InnerProductLayer<Dtype>::Reshape(const vector<Blob<Dtype>*>& bottom,
 }
 
 template <typename Dtype>
-void InnerProductLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
+void MatmulLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
     const vector<Blob<Dtype>*>& top) {
   NOT_IMPLEMENTED;
 }
 
 template <typename Dtype>
-void InnerProductLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
+void MatmulLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
     const vector<bool>& propagate_down,
     const vector<Blob<Dtype>*>& bottom) {
     NOT_IMPLEMENTED;
