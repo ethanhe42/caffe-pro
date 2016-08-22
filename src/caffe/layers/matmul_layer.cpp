@@ -12,8 +12,9 @@ void MatmulLayer<Dtype>::LayerSetUp(const vector<Blob<Dtype>*>& bottom,
 //   transpose_ = this->layer_param_.matmul_param().transpose();
   
   M_ = bottom[0]->count(0,1);
-  N_ = M_;
+  N_ = bottom[1]->count(0,1);
   K_ = bottom[0]->count(1,2);
+  CHECK_EQ(K_, bottom[1]->count(1,2));
 }
 
 template <typename Dtype>
@@ -28,9 +29,10 @@ void MatmulLayer<Dtype>::Reshape(const vector<Blob<Dtype>*>& bottom,
   // Set up the bias multiplier
   // fill the I
   eye_.Reshape(top_shape);
-  shared_ptr<Filler<Dtype> > weight_filler(GetFiller<Dtype>(
-    this->layer_param_.matmul_param().weight_filler()));
-  weight_filler->Fill(&eye_);
+  FillerParameter filler_param;
+  filler_param.set_value(1);
+  GaussianFiller<Dtype> filler(filler_param);
+  filler.Fill(&eye_);
 }
 
 template <typename Dtype>
