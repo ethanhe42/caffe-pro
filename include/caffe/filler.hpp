@@ -69,7 +69,7 @@ class EyeFiller : public Filler<Dtype> {
         if (i == j){
           data[cnt] = value;
         } else {
-          data[cnt] = 0;
+          data[cnt] = 0.;
         }
         cnt++;
       }
