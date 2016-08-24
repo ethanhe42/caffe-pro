@@ -30,7 +30,7 @@ void MatmulLayer<Dtype>::Reshape(const vector<Blob<Dtype>*>& bottom,
   // fill the I
   eye_.Reshape(top_shape);
   FillerParameter filler_param;
-  filler_param.set_value(1);
+  filler_param.set_value(1.);
   GaussianFiller<Dtype> filler(filler_param);
   filler.Fill(&eye_);
 }

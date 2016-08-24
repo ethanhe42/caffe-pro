@@ -306,7 +306,7 @@ message ParamSpec {
 // NOTE
 // Update the next available ID when you add a new LayerParameter field.
 //
-// LayerParameter next available layer-specific ID: 147 (last added: recurrent_param)
+// LayerParameter next available layer-specific ID: 149 (last added: recurrent_param)
 message LayerParameter {
   optional string name = 1; // the layer name
   optional string type = 2; // the layer type
@@ -395,6 +395,7 @@ message LayerParameter {
   optional ReductionParameter reduction_param = 136;
   optional ReLUParameter relu_param = 123;
   optional ReshapeParameter reshape_param = 133;
+  optional TransposeParameter transpose_param = 148;
   optional ScaleParameter scale_param = 142;
   optional SigmoidParameter sigmoid_param = 124;
   optional SoftmaxParameter softmax_param = 125;
@@ -1001,6 +1002,13 @@ message ReLUParameter {
   optional Engine engine = 2 [default = DEFAULT];
 }
 
+message TransposeParameter {
+  // default swap channels and num_output
+  optional int32 n = 1 [default = 1];
+  optional int32 c = 2 [default = 0];
+  optional int32 h = 3 [default = 2];
+  optional int32 w = 4 [default = 3];
+}
 message ReshapeParameter {
   // Specify the output dimensions. If some of the dimensions are set to 0,
   // the corresponding dimension from the bottom layer is used (unchanged).
