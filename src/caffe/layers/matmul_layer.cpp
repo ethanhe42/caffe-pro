@@ -13,8 +13,10 @@ void MatmulLayer<Dtype>::LayerSetUp(const vector<Blob<Dtype>*>& bottom,
   
   M_ = bottom[0]->count(0,1);
   N_ = bottom[1]->count(0,1);
-  K_ = bottom[0]->count(1,2);
-  CHECK_EQ(K_, bottom[1]->count(1,2));
+  const int axis = bottom[0]->CanonicalAxisIndex(1);
+  K_ = bottom[0]->count(axis);
+
+  CHECK_EQ(K_, bottom[1]->count(bottom[1]->CanonicalAxisIndex(1)));
 }
 
 template <typename Dtype>

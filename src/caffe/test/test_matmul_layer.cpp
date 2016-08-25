@@ -18,8 +18,8 @@ class MatmulLayerTest : public GPUDeviceTest<TypeParam> {
   typedef typename TypeParam::Dtype Dtype;
  protected:
   MatmulLayerTest()
-      : blob_bottom_a(new Blob<Dtype>(8, 16, 1, 1)),blob_bottom_b(new Blob<Dtype>(8, 16, 1, 1)),
-        blob_top_(new Blob<Dtype>(8, 8, 1, 1)) {
+      : blob_bottom_a(new Blob<Dtype>(2, 3, 4, 5)),blob_bottom_b(new Blob<Dtype>(2, 3, 4, 5)),
+        blob_top_(new Blob<Dtype>(2, 2, 1, 1)) {
 
     blob_bottom_vec_.push_back(blob_bottom_a);
     blob_bottom_vec_.push_back(blob_bottom_b);

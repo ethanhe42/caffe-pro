@@ -1,1 +1,1 @@
-make runtest GTEST_FILTER='EyeFillerTest/*'
+make runtest GTEST_FILTER='MatmulLayerTest/*'
