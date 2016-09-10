@@ -172,7 +172,7 @@ class NetBuilder(object):
             f.write(str(self.net))
 
     def show(self):
-        print self.net
+        print(self.net)
     #************************** params **************************
 
     def param(self, lr_mult=1, decay_mult=0, name=None):
@@ -434,7 +434,7 @@ class NetBuilder(object):
 
     def res_func(self, name, num_output, up=False):
         bottom = self.cur.name
-        print bottom
+        print(bottom)
         self.conv_bn_relu(name+'_conv0', num_output=num_output, stride=1+int(up))
         self.conv_bn(name+'_conv1', num_output=num_output)
         if up:
