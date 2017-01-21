@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import inspect
 import os
+import os.path as osp
 import random
 import sys
 import matplotlib.cm as cmx
@@ -10,8 +11,7 @@ import matplotlib.legend as lgd
 import matplotlib.markers as mks
 
 def get_log_parsing_script():
-    dirname = os.path.dirname(os.path.abspath(inspect.getfile(
-        inspect.currentframe())))
+    dirname = osp.join('/unsullied/sharefs/heyihui/ceph-0/heyihui-local/caffe', 'tools/extra')
     return dirname + '/parse_log.sh'
 
 def get_log_file_suffix():
@@ -120,8 +120,8 @@ def plot_chart(chart_type, path_to_png, path_to_log_list):
         label = get_data_label(path_to_log)
         linewidth = 0.75
         ## If there too many datapoints, do not use marker.
-##        use_marker = False
-        use_marker = True
+        use_marker = False
+        #use_marker = True
         if not use_marker:
             plt.plot(data[0], data[1], label = label, color = color,
                      linewidth = linewidth)
@@ -142,7 +142,7 @@ def plot_chart(chart_type, path_to_png, path_to_log_list):
     plt.xlabel(x_axis_field)
     plt.ylabel(y_axis_field)
     plt.savefig(path_to_png)
-    plt.show()
+    #plt.show()
 
 def print_help():
     print """This script mainly serves as the basis of your customizations.
