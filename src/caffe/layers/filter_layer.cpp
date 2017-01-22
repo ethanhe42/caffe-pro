@@ -1,4 +1,5 @@
 #include <vector>
+#include "caffe/filler.hpp"
 
 #include "caffe/layers/filter_layer.hpp"
 #include "caffe/util/math_functions.hpp"
@@ -8,33 +9,44 @@ namespace caffe {
 template <typename Dtype>
 void FilterLayer<Dtype>::LayerSetUp(const vector<Blob<Dtype>*>& bottom,
       const vector<Blob<Dtype>*>& top) {
-  CHECK_EQ(top.size(), bottom.size() - 1);
+  CHECK_EQ(top.size(), bottom.size());
   first_reshape_ = true;
   axis_ = this->layer_param_.filter_param().axis();
+  if (this->blobs_.size() > 0) {
+    LOG(INFO) << "Skipping parameter initialization";
+  } else {
+    this->blobs_.resize(1);
+    vector<int> weight_shape(1);
+    weight_shape[0] = bottom[0]->shape(axis_);
+    this->blobs_[0].reset(new Blob<Dtype>(weight_shape));
+    Blob<Dtype>* blob = this->blobs_[0].get();
+    Dtype* data = blob->mutable_cpu_data();
+    for (int i = 0; i < blob->count(); ++i) {
+      data[i] = Dtype(1);
+    }
+  }
+  this->param_propagate_down_.resize(this->blobs_.size(), true);
 }
 
 template <typename Dtype>
 void FilterLayer<Dtype>::Reshape(const vector<Blob<Dtype>*>& bottom,
       const vector<Blob<Dtype>*>& top) {
-  // bottom[0...k-1] are the blobs to filter
-  // bottom[last] is the "selector_blob"
-  int selector_index = bottom.size() - 1;
-  for (int i = 1; i < bottom[selector_index]->num_axes(); ++i) {
-    CHECK_EQ(bottom[selector_index]->shape(i), 1)
+  for (int i = 1; i < this->blobs_[0]->num_axes(); ++i) {
+    CHECK_EQ(this->blobs_[0]->shape(i), 1)
         << "Selector blob dimensions must be singletons (1), except the first";
   }
-  for (int i = 0; i < bottom.size() - 1; ++i) {
-    CHECK_EQ(bottom[selector_index]->shape(axis_), bottom[i]->shape(axis_)) <<
+  for (int i = 0; i < bottom.size(); ++i) {
+    CHECK_EQ(this->blobs_[0]->shape(0), bottom[i]->shape(axis_)) <<
         "Each bottom should have the same 0th dimension as the selector blob";
   }
 
-  const Dtype* bottom_data_selector = bottom[selector_index]->cpu_data();
+  const Dtype* bottom_data_selector = this->blobs_[0]->cpu_data();
   indices_to_forward_.clear();
 
   // look for non-zero elements in bottom[0]. Items of each bottom that
   // have the same index as the items in bottom[0] with value == non-zero
   // will be forwarded
-  for (int item_id = 0; item_id < bottom[selector_index]->shape(0); ++item_id) {
+  for (int item_id = 0; item_id < this->blobs_[0]->shape(0); ++item_id) {
     // we don't need an offset because item size == 1
     const Dtype* tmp_data_selector = bottom_data_selector + item_id;
     if (*tmp_data_selector) {
@@ -42,18 +54,13 @@ void FilterLayer<Dtype>::Reshape(const vector<Blob<Dtype>*>& bottom,
     }
   }
   // only filtered items will be forwarded
-  int new_tops_num = indices_to_forward_.size();
-  // init
-  if (first_reshape_) {
-    new_tops_num = bottom[0]->shape(axis_);
-    first_reshape_ = false;
-  }
+  int new_tops_num = this->layer_param_.filter_param().num_output();
   for (int t = 0; t < top.size(); ++t) {
     int num_axes = bottom[t]->num_axes();
     vector<int> shape_top(num_axes);
-    shape_top[axis_] = new_tops_num;
-    for (int ts = 1; ts < num_axes; ++ts)
+    for (int ts = 0; ts < num_axes; ++ts)
       shape_top[ts] = bottom[t]->shape(ts);
+    shape_top[axis_] = new_tops_num;
     top[t]->Reshape(shape_top);
   }
 }

@@ -7,10 +7,10 @@ namespace caffe {
 
 template <typename Dtype>
 __global__ void filter_gpu(const int nthreads, const Dtype* from_data,
-  Dtype* to_data, const int from, const int to, const int hw, const int chw) {
+  Dtype* to_data, const int from, const int to, const int hw, const int chw, const int cphw) {
   CUDA_KERNEL_LOOP(index, nthreads) {
     int from_idx = (index / hw ) * chw + from * hw + index % hw;
-    int to_idx   = (index / hw ) * chw + to   * hw + index % hw;
+    int to_idx   = (index / hw ) * cphw + to   * hw + index % hw;
 
     *(to_data + to_idx) = *(from_data + from_idx);
   }
@@ -34,15 +34,19 @@ void FilterLayer<Dtype>::Forward_gpu(const vector<Blob<Dtype>*>& bottom,
     const Dtype* bottom_data = bottom[t]->gpu_data();
     Dtype* top_data = top[t]->mutable_gpu_data();
     int dim = bottom[t]->count() / bottom[t]->shape(axis_);
+    const int hw = bottom[t]->shape(2) * bottom[t]->shape(3);
+    const int chw = bottom[t]->shape(1) * bottom[t]->shape(2) * bottom[t]->shape(3);
+    const int cphw = new_tops_num * bottom[t]->shape(2) * bottom[t]->shape(3);
+
     for (int n = 0; n < new_tops_num; ++n) {
-      int data_offset_top = n * dim;
-      int data_offset_bottom = indices_to_forward_[n] * dim;
       if (axis_) {
             filter_gpu<Dtype>  // NOLINT_NEXT_LINE(whitespace/operators)
             <<<CAFFE_GET_BLOCKS(dim), CAFFE_CUDA_NUM_THREADS>>>(
-            dim, bottom[t]->gpu_data(), top[t]->mutable_gpu_data(), indices_to_forward_[n], n, bottom[t]->count(1), bottom[t]->count(2));
+            dim, bottom_data, top_data, indices_to_forward_[n], n, hw, chw, cphw);
       }
       else {
+        int data_offset_top = n * dim;
+        int data_offset_bottom = indices_to_forward_[n] * dim;
         caffe_copy(dim, bottom_data + data_offset_bottom,
           top_data + data_offset_top);
       }
@@ -61,14 +65,16 @@ void FilterLayer<Dtype>::Backward_gpu(const vector<Blob<Dtype>*>& top,
     // bottom[last] is the selector and never needs backpropagation
     // so we can iterate over top vector because top.size() == bottom.size() -1
     if (propagate_down[i]) {
+      int new_tops_num = indices_to_forward_.size();  
       const int dim = top[i]->count() / top[i]->shape(axis_);
-      const int hw = top[i]->count(2);
-      const int chw = top[i]->count(1);
+      const int hw = bottom[i]->shape(2) * bottom[i]->shape(3);
+      const int chw = bottom[i]->shape(1) * bottom[i]->shape(2) * bottom[i]->shape(3);
+      const int cphw = new_tops_num * bottom[i]->shape(2) * bottom[i]->shape(3);
       int next_to_backward_offset = 0;
       int batch_offset = 0;
       int data_offset_bottom = 0;
       int data_offset_top = 0;
-      for (int n = 0; n < bottom[i]->shape(0); ++n) {
+      for (int n = 0; n < bottom[i]->shape(axis_); ++n) {
         if (next_to_backward_offset >= indices_to_forward_.size()) {
           // we already visited all items that were been forwarded, so
           // just set to zero remaining ones
@@ -98,7 +104,7 @@ void FilterLayer<Dtype>::Backward_gpu(const vector<Blob<Dtype>*>& top,
             if (axis_) {
                   filter_gpu<Dtype>  // NOLINT_NEXT_LINE(whitespace/operators)
                   <<<CAFFE_GET_BLOCKS(dim), CAFFE_CUDA_NUM_THREADS>>>(
-                  dim, top[i]->mutable_gpu_diff(), bottom[i]->mutable_gpu_diff(), next_to_backward_offset, n, hw, chw);
+                  dim, top[i]->mutable_gpu_diff(), bottom[i]->mutable_gpu_diff(), next_to_backward_offset, n, hw, cphw, chw);
             }
             else {
                   caffe_copy(dim, top[i]->mutable_gpu_diff() + data_offset_top,

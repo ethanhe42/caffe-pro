@@ -479,7 +479,9 @@ message AccuracyParameter {
 }
 
 message FilterParamter {
-  optional int32 axis = 1 [default = 0];
+  optional int32 axis = 1 [default = 1];
+  optional int32 num_output = 2;
+  
 }
 
 message ArgMaxParameter {
