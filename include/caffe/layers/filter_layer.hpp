@@ -69,6 +69,7 @@ class FilterLayer : public Layer<Dtype> {
     const vector<bool>& propagate_down, const vector<Blob<Dtype>*>& bottom);
 
   bool first_reshape_;
+  int axis_;
   vector<int> indices_to_forward_;
 };
 

@@ -62,6 +62,7 @@ class CuDNNConvolutionLayer : public ConvolutionLayer<Dtype> {
   size_t *workspace_bwd_data_sizes_;
   size_t *workspace_bwd_filter_sizes_;
   size_t workspaceSizeInBytes;  // size of underlying storage
+  int ngroup;
   void *workspaceData;  // underlying storage
   void **workspace;  // aliases into workspaceData
 };

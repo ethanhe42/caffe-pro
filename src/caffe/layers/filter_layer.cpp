@@ -10,6 +10,7 @@ void FilterLayer<Dtype>::LayerSetUp(const vector<Blob<Dtype>*>& bottom,
       const vector<Blob<Dtype>*>& top) {
   CHECK_EQ(top.size(), bottom.size() - 1);
   first_reshape_ = true;
+  axis_ = this->layer_param_.filter_param().axis();
 }
 
 template <typename Dtype>
@@ -23,7 +24,7 @@ void FilterLayer<Dtype>::Reshape(const vector<Blob<Dtype>*>& bottom,
         << "Selector blob dimensions must be singletons (1), except the first";
   }
   for (int i = 0; i < bottom.size() - 1; ++i) {
-    CHECK_EQ(bottom[selector_index]->shape(0), bottom[i]->shape(0)) <<
+    CHECK_EQ(bottom[selector_index]->shape(axis_), bottom[i]->shape(axis_)) <<
         "Each bottom should have the same 0th dimension as the selector blob";
   }
 
@@ -44,13 +45,13 @@ void FilterLayer<Dtype>::Reshape(const vector<Blob<Dtype>*>& bottom,
   int new_tops_num = indices_to_forward_.size();
   // init
   if (first_reshape_) {
-    new_tops_num = bottom[0]->shape(0);
+    new_tops_num = bottom[0]->shape(axis_);
     first_reshape_ = false;
   }
   for (int t = 0; t < top.size(); ++t) {
     int num_axes = bottom[t]->num_axes();
     vector<int> shape_top(num_axes);
-    shape_top[0] = new_tops_num;
+    shape_top[axis_] = new_tops_num;
     for (int ts = 1; ts < num_axes; ++ts)
       shape_top[ts] = bottom[t]->shape(ts);
     top[t]->Reshape(shape_top);
@@ -65,7 +66,7 @@ void FilterLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
   for (int t = 0; t < top.size(); ++t) {
     const Dtype* bottom_data = bottom[t]->cpu_data();
     Dtype* top_data = top[t]->mutable_cpu_data();
-    int dim = bottom[t]->count() / bottom[t]->shape(0);
+    int dim = bottom[t]->count() / bottom[t]->shape(axis_);
     for (int n = 0; n < new_tops_num; ++n) {
       int data_offset_top = n * dim;
       int data_offset_bottom = indices_to_forward_[n] * bottom[t]->count(1);

@@ -10,17 +10,20 @@ namespace caffe {
 // can use separate streams for calculating the gradient w.r.t.
 // bias, filter weights, and bottom data for each group independently
 #define CUDNN_STREAMS_PER_GROUP 3
+#define MAX_GROUP 32
 
 /**
  * TODO(dox) explain cuDNN interface
  */
+
 template <typename Dtype>
 void CuDNNConvolutionLayer<Dtype>::LayerSetUp(
     const vector<Blob<Dtype>*>& bottom, const vector<Blob<Dtype>*>& top) {
   ConvolutionLayer<Dtype>::LayerSetUp(bottom, top);
   // Initialize CUDA streams and cuDNN.
-  stream_         = new cudaStream_t[this->group_ * CUDNN_STREAMS_PER_GROUP];
-  handle_         = new cudnnHandle_t[this->group_ * CUDNN_STREAMS_PER_GROUP];
+  ngroup = std::min(this->group_, MAX_GROUP);
+  stream_         = new cudaStream_t[ngroup * CUDNN_STREAMS_PER_GROUP];
+  handle_         = new cudnnHandle_t[ngroup * CUDNN_STREAMS_PER_GROUP];
 
   // Initialize algorithm arrays
   fwd_algo_       = new cudnnConvolutionFwdAlgo_t[bottom.size()];
@@ -35,7 +38,7 @@ void CuDNNConvolutionLayer<Dtype>::LayerSetUp(
   // workspace data
   workspaceSizeInBytes = 0;
   workspaceData = NULL;
-  workspace = new void*[this->group_ * CUDNN_STREAMS_PER_GROUP];
+  workspace = new void*[ngroup * CUDNN_STREAMS_PER_GROUP];
 
   for (size_t i = 0; i < bottom.size(); ++i) {
     // initialize all to default algorithms
@@ -48,7 +51,7 @@ void CuDNNConvolutionLayer<Dtype>::LayerSetUp(
     workspace_bwd_filter_sizes_[i] = 0;
   }
 
-  for (int g = 0; g < this->group_ * CUDNN_STREAMS_PER_GROUP; g++) {
+  for (int g = 0; g < ngroup * CUDNN_STREAMS_PER_GROUP; g++) {
     CUDA_CHECK(cudaStreamCreate(&stream_[g]));
     CUDNN_CHECK(cudnnCreate(&handle_[g]));
     CUDNN_CHECK(cudnnSetStream(handle_[g], stream_[g]));
@@ -110,7 +113,7 @@ void CuDNNConvolutionLayer<Dtype>::Reshape(
 
   // Specify workspace limit for kernels directly until we have a
   // planning strategy and a rewrite of Caffe's GPU memory mangagement
-  size_t workspace_limit_bytes = 0;//8*1024*1024;
+  size_t workspace_limit_bytes = 8*1024*1024;
 
   for (int i = 0; i < bottom.size(); i++) {
     cudnn::setTensor4dDesc<Dtype>(&bottom_descs_[i],
@@ -187,7 +190,7 @@ void CuDNNConvolutionLayer<Dtype>::Reshape(
   max_workspace = std::max(max_workspace, total_workspace_bwd_filter);
   // ensure all groups have enough workspace
   size_t total_max_workspace = max_workspace *
-                               (this->group_ * CUDNN_STREAMS_PER_GROUP);
+                               (ngroup * CUDNN_STREAMS_PER_GROUP);
 
   // this is the total amount of storage needed over all groups + streams
   if (total_max_workspace > workspaceSizeInBytes) {
@@ -210,7 +213,7 @@ void CuDNNConvolutionLayer<Dtype>::Reshape(
       }
 
       // NULL out all workspace pointers
-      for (int g = 0; g < (this->group_ * CUDNN_STREAMS_PER_GROUP); g++) {
+      for (int g = 0; g < (ngroup * CUDNN_STREAMS_PER_GROUP); g++) {
         workspace[g] = NULL;
       }
       // NULL out underlying data
@@ -219,7 +222,7 @@ void CuDNNConvolutionLayer<Dtype>::Reshape(
     }
 
     // if we succeed in the allocation, set pointer aliases for workspaces
-    for (int g = 0; g < (this->group_ * CUDNN_STREAMS_PER_GROUP); g++) {
+    for (int g = 0; g < (ngroup * CUDNN_STREAMS_PER_GROUP); g++) {
       workspace[g] = reinterpret_cast<char *>(workspaceData) + g*max_workspace;
     }
   }
@@ -246,7 +249,7 @@ CuDNNConvolutionLayer<Dtype>::~CuDNNConvolutionLayer() {
   }
   cudnnDestroyFilterDescriptor(filter_desc_);
 
-  for (int g = 0; g < this->group_ * CUDNN_STREAMS_PER_GROUP; g++) {
+  for (int g = 0; g < ngroup * CUDNN_STREAMS_PER_GROUP; g++) {
     cudaStreamDestroy(stream_[g]);
     cudnnDestroy(handle_[g]);
   }
