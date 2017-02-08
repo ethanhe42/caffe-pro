@@ -13,16 +13,13 @@
 namespace caffe {
 
 template <typename TypeParam>
-class FilterLayerTest : public MultiDeviceTest<TypeParam> {
+class FilterLayerTest : public GPUDeviceTest<TypeParam> {
   typedef typename TypeParam::Dtype Dtype;
 
  protected:
   FilterLayerTest()
       : blob_bottom_data_(new Blob<Dtype>(4, 3, 6, 4)),
-        blob_bottom_labels_(new Blob<Dtype>(4, 1, 1, 1)),
-        blob_bottom_selector_(new Blob<Dtype>(4, 1, 1, 1)),
-        blob_top_data_(new Blob<Dtype>()),
-        blob_top_labels_(new Blob<Dtype>()) {}
+        blob_top_data_(new Blob<Dtype>()) {}
   virtual void SetUp() {
     // fill the values
     Caffe::set_random_seed(1890);
@@ -40,17 +37,11 @@ class FilterLayerTest : public MultiDeviceTest<TypeParam> {
       blob_bottom_labels_->mutable_cpu_data()[i] = caffe_rng_rand() % 5;
     }
     blob_bottom_vec_.push_back(blob_bottom_data_);
-    blob_bottom_vec_.push_back(blob_bottom_labels_);
-    blob_bottom_vec_.push_back(blob_bottom_selector_);
     blob_top_vec_.push_back(blob_top_data_);
-    blob_top_vec_.push_back(blob_top_labels_);
   }
   virtual ~FilterLayerTest() {
     delete blob_bottom_data_;
-    delete blob_bottom_labels_;
-    delete blob_bottom_selector_;
     delete blob_top_data_;
-    delete blob_top_labels_;
   }
   Blob<Dtype>* const blob_bottom_data_;
   Blob<Dtype>* const blob_bottom_labels_;
