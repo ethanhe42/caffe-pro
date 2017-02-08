@@ -10,7 +10,7 @@ namespace caffe {
 // can use separate streams for calculating the gradient w.r.t.
 // bias, filter weights, and bottom data for each group independently
 #define CUDNN_STREAMS_PER_GROUP 3
-#define MAX_GROUP 32
+#define MAX_GROUP 16
 
 /**
  * TODO(dox) explain cuDNN interface
@@ -113,7 +113,7 @@ void CuDNNConvolutionLayer<Dtype>::Reshape(
 
   // Specify workspace limit for kernels directly until we have a
   // planning strategy and a rewrite of Caffe's GPU memory mangagement
-  size_t workspace_limit_bytes = 8*1024*1024;
+  size_t workspace_limit_bytes = 0;//8*1024*1024;
 
   for (int i = 0; i < bottom.size(); i++) {
     cudnn::setTensor4dDesc<Dtype>(&bottom_descs_[i],
