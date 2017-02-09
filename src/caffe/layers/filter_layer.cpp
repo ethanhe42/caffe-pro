@@ -49,12 +49,14 @@ void FilterLayer<Dtype>::Reshape(const vector<Blob<Dtype>*>& bottom,
   for (int item_id = 0; item_id < this->blobs_[0]->shape(0); ++item_id) {
     // we don't need an offset because item size == 1
     const Dtype* tmp_data_selector = bottom_data_selector + item_id;
+    // LOG(INFO) << *tmp_data_selector << ' ';
     if (*tmp_data_selector) {
       indices_to_forward_.push_back(item_id);
     }
   }
   // only filtered items will be forwarded
   int new_tops_num = this->layer_param_.filter_param().num_output();
+  // CHECK_EQ(new_tops_num, indices_to_forward_.size());
   for (int t = 0; t < top.size(); ++t) {
     int num_axes = bottom[t]->num_axes();
     vector<int> shape_top(num_axes);

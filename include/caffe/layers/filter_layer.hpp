@@ -70,6 +70,7 @@ class FilterLayer : public Layer<Dtype> {
 
   bool first_reshape_;
   int axis_;
+  int wrong_;
   vector<int> indices_to_forward_;
 };
 

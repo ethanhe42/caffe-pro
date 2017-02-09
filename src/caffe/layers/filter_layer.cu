@@ -33,9 +33,10 @@ void FilterLayer<Dtype>::Forward_gpu(const vector<Blob<Dtype>*>& bottom,
     NOT_IMPLEMENTED;
     return;
   }        
-  int new_tops_num = indices_to_forward_.size();
   // forward all filtered items for all bottoms but the Selector (bottom[last])
   for (int t = 0; t < top.size(); ++t) {
+    int new_tops_num = top[t]->shape(axis_);
+    CHECK_EQ(indices_to_forward_.size(), new_tops_num);    
     const Dtype* bottom_data = bottom[t]->gpu_data();
     Dtype* top_data = top[t]->mutable_gpu_data();
     int dim = bottom[t]->count() / bottom[t]->shape(axis_);

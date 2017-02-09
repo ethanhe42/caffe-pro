@@ -10,7 +10,7 @@ namespace caffe {
 // can use separate streams for calculating the gradient w.r.t.
 // bias, filter weights, and bottom data for each group independently
 #define CUDNN_STREAMS_PER_GROUP 3
-#define MAX_GROUP 16
+#define MAX_GROUP 1
 
 /**
  * TODO(dox) explain cuDNN interface
@@ -113,7 +113,7 @@ void CuDNNConvolutionLayer<Dtype>::Reshape(
 
   // Specify workspace limit for kernels directly until we have a
   // planning strategy and a rewrite of Caffe's GPU memory mangagement
-  size_t workspace_limit_bytes = 0;//8*1024*1024;
+  size_t workspace_limit_bytes = 8*1024;//8*1024*1024;
 
   for (int i = 0; i < bottom.size(); i++) {
     cudnn::setTensor4dDesc<Dtype>(&bottom_descs_[i],
@@ -178,19 +178,19 @@ void CuDNNConvolutionLayer<Dtype>::Reshape(
 
   for (size_t i = 0; i < bottom.size(); i++) {
     total_workspace_fwd        = std::max(total_workspace_fwd,
-                                     workspace_fwd_sizes_[i]);
+                                    workspace_fwd_sizes_[i]);
     total_workspace_bwd_data   = std::max(total_workspace_bwd_data,
-                                     workspace_bwd_data_sizes_[i]);
+                                    workspace_bwd_data_sizes_[i]);
     total_workspace_bwd_filter = std::max(total_workspace_bwd_filter,
-                                     workspace_bwd_filter_sizes_[i]);
+                                    workspace_bwd_filter_sizes_[i]);
   }
   // get max over all operations
   size_t max_workspace = std::max(total_workspace_fwd,
-                             total_workspace_bwd_data);
+                            total_workspace_bwd_data);
   max_workspace = std::max(max_workspace, total_workspace_bwd_filter);
   // ensure all groups have enough workspace
   size_t total_max_workspace = max_workspace *
-                               (ngroup * CUDNN_STREAMS_PER_GROUP);
+                              (ngroup * CUDNN_STREAMS_PER_GROUP);
 
   // this is the total amount of storage needed over all groups + streams
   if (total_max_workspace > workspaceSizeInBytes) {

@@ -1,5 +1,6 @@
 ## General
 .vscode/
+*DS_Store
 core
 # Compiled Object files
 *.slo
@@ -71,6 +72,7 @@ models/*
 *.binaryproto
 *leveldb
 *lmdb
+*.mdb
 
 # build, distribute, and bins (+ python proto bindings)
 build
