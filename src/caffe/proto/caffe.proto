@@ -799,6 +799,7 @@ message ImageDataParameter {
   optional uint32 new_dim = 13 [default = 0];
   // Specify if the images are color or gray
   optional bool is_color = 11 [default = true];
+  optional bool bicubic = 14 [default = false];
   // DEPRECATED. See TransformationParameter. For data pre-processing, we can do
   // simple scaling and subtracting the data mean, if provided. Note that the
   // mean subtraction is always carried out before scaling.

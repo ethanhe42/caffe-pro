@@ -88,7 +88,7 @@ cv::Mat ReadImageToCVMat(const string& filename,
   return cv_img;
 }
 
-cv::Mat ReadImageToCVMat(const string& filename, const int height, const int width, const int min_dim, const bool is_color) {
+cv::Mat ReadImageToCVMat(const string& filename, const int height, const int width, const int min_dim, const bool is_color, const bool bicubic) {
     if(min_dim == 0) return ReadImageToCVMat(filename, height, width, is_color);
     else {
         cv::Mat cv_img;
@@ -109,7 +109,12 @@ cv::Mat ReadImageToCVMat(const string& filename, const int height, const int wid
                 new_height = min_dim;
                 new_width = round(scale_factor * cv_img_origin.cols);
             }
-            cv::resize(cv_img_origin, cv_img, cv::Size(new_width, new_height));
+            if (bicubic){
+              cv::resize(cv_img_origin, cv_img, cv::Size(new_width, new_height), 0, 0, cv::INTER_CUBIC);
+            }
+            else{
+              cv::resize(cv_img_origin, cv_img, cv::Size(new_width, new_height));
+            }
         } else {
             cv_img = cv_img_origin;
         }
