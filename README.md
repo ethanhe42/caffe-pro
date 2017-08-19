@@ -1,5 +1,6 @@
 ### modification from Caffe
 - ImageData layer: Supporting resize image shorter side to 256 then crop to 224x224
+- Convolution: Supporting Spatial convolution, which was used in Xception
 
 # Caffe
 
