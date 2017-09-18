@@ -4,6 +4,38 @@ title: "Installation: Ubuntu"
 
 # Ubuntu Installation
 
+### For Ubuntu (>= 17.04)
+
+**Installing pre-compiled Caffe**
+
+Everything including caffe itself is packaged in 17.04 and higher versions.
+To install pre-compiled Caffe package, just do it by
+
+    sudo apt install caffe-cpu
+
+for CPU-only version, or
+
+    sudo apt install caffe-cuda
+
+for CUDA version. Note, the cuda version may break if your NVIDIA driver
+and CUDA toolkit are not installed by APT.
+
+[Package status of CPU-only version](https://launchpad.net/ubuntu/+source/caffe)
+
+[Package status of CUDA version](https://launchpad.net/ubuntu/+source/caffe-contrib)
+
+**Installing Caffe from source**
+
+We may install the dependencies by merely one line
+
+    sudo apt build-dep caffe-cpu        # dependencies for CPU-only version
+    sudo apt build-dep caffe-cuda       # dependencies for CUDA version
+
+It requires a `deb-src` line in your `sources.list`.
+Continue with [compilation](installation.html#compilation).
+
+### For Ubuntu (\< 17.04)
+
 **General dependencies**
 
     sudo apt-get install libprotobuf-dev libleveldb-dev libsnappy-dev libopencv-dev libhdf5-serial-dev protobuf-compiler
@@ -14,7 +46,7 @@ The NVIDIA package tends to follow more recent library and driver versions, but 
 If installing from packages, install the library and latest driver separately; the driver bundled with the library is usually out-of-date.
 This can be skipped for CPU-only installation.
 
-**BLAS**: install ATLAS by `sudo apt-get install libatlas-base-dev` or install OpenBLAS or MKL for better CPU performance.
+**BLAS**: install ATLAS by `sudo apt-get install libatlas-base-dev` or install OpenBLAS by `sudo apt-get install libopenblas-dev` or MKL for better CPU performance.
 
 **Python** (optional): if you use the default Python you will need to `sudo apt-get install` the `python-dev` package to have the Python headers for building the pycaffe interface.
 
