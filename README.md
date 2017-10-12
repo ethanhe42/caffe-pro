@@ -2,7 +2,8 @@
 - ImageData layer: 
     - Supporting resize image shorter side to 256 then crop to 224x224   
     - various interpolation methods (bicubic, bilinear etc.)
-- Convolution: Supporting Spatial convolution, which was used in Xception
+- Spatial Convolution: which was used in Xception
+- Filter layer: Given a input blob, select a subset of channels as output blob
 
 # Caffe
 
