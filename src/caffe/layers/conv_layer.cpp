@@ -28,12 +28,72 @@ void ConvolutionLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
   for (int i = 0; i < bottom.size(); ++i) {
     const Dtype* bottom_data = bottom[i]->cpu_data();
     Dtype* top_data = top[i]->mutable_cpu_data();
-    for (int n = 0; n < this->num_; ++n) {
-      this->forward_cpu_gemm(bottom_data + n * this->bottom_dim_, weight,
-          top_data + n * this->top_dim_);
-      if (this->bias_term_) {
-        const Dtype* bias = this->blobs_[1]->cpu_data();
-        this->forward_cpu_bias(top_data + n * this->top_dim_, bias);
+    if (this->layer_param_.convolution_param().has_filterwise_ratio()) {
+      const float filterwiser_data = this->layer_param_.convolution_param().filterwise_ratio();
+      const int count = top[i]->count();
+      const int channels=this->channels_;
+      const int output_channels=top[i]->shape(1);
+      const int output_height=top[i]->shape(2); 
+      const int output_width=top[i]->shape(3);
+      const int input_height=bottom[i]->shape(2);
+      const int input_width=bottom[i]->shape(3);
+      const int kernel_height=this->blobs_[0]->shape(2); 
+      const int kernel_width=this->blobs_[0]->shape(3);
+      const int stride_y=this->stride_.cpu_data()[0]; 
+      const int stride_x=this->stride_.cpu_data()[1]; 
+      const int pad_y=this->pad_.cpu_data()[0]; 
+      const int pad_x=this->pad_.cpu_data()[1];
+      int ow, indexer, oh, n, iw, ih, wcoff,xcoff;
+      int hw= output_width*output_height;
+      int ihw= input_height * input_width;
+      int khw= kernel_width * kernel_height;
+      int chw = hw * output_channels;
+      int exp_ch = filterwiser_data * channels;
+      for (int index=0; index < count; index++) {
+        ow = index % output_width;
+        indexer = index/output_width;
+        oh = indexer % output_height;
+        indexer /= output_height;
+        ///int c = indexer % channels;
+        n = indexer / output_channels;
+        //n = index / chw;
+        iw = ow * stride_x - pad_x;
+        ih = oh * stride_y - pad_y;
+
+        Dtype v = 0;
+        int woff = 0;
+        int xoff = 0;
+        for (int kh = 0; kh < kernel_height; kh++) {
+          if (ih + kh >= 0 && ih + kh < input_height) {
+            for (int kw = 0; kw < kernel_width; kw++) {
+              if (iw + kw >= 0 && iw + kw < input_width) {
+                for (int ic = 0; ic < exp_ch; ic++){
+                  xcoff = ic * input_height * input_width + ((n * channels) * input_height + ih) * input_width + iw;
+                  wcoff = ic * kernel_width * kernel_height;
+                  //xcoff = ic * ihw;
+                  //wcoff = ic * khw;
+                  //v += (bottom_data+xoff+xcoff)[kw] * (weight+woff+wcoff)[kw];
+                  //v += bottom_data[xoff+xcoff+kw] * weight[woff+wcoff+kw];
+                  *(top_data+index) += bottom_data[xoff+xcoff+kw] * weight[woff+wcoff+kw];
+
+                }
+              }
+            }
+          }
+          xoff += input_width;
+          woff += kernel_width;
+        }
+        //*(top_data+index) = v;
+      }
+    }
+    else{
+      for (int n = 0; n < this->num_; ++n) {
+        this->forward_cpu_gemm(bottom_data + n * this->bottom_dim_, weight,
+            top_data + n * this->top_dim_);
+        if (this->bias_term_) {
+          const Dtype* bias = this->blobs_[1]->cpu_data();
+          this->forward_cpu_bias(top_data + n * this->top_dim_, bias);
+        }
       }
     }
   }

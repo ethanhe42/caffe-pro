@@ -600,6 +600,8 @@ message ConvolutionParameter {
   }
   optional Engine engine = 15 [default = DEFAULT];
 
+  optional float filterwise_ratio = 19 [default = 1.0];
+
   // The axis to interpret as "channels" when performing convolution.
   // Preceding dimensions are treated as independent inputs;
   // succeeding dimensions are treated as "spatial".
